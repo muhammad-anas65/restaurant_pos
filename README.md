@@ -38,7 +38,7 @@ A modern, full-featured Restaurant Point of Sale (POS) system built with React.j
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/muhammad-anas65/restaurant_pos.git
    cd restaurant-pos-system
    ```
 

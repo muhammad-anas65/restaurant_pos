@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: restaurant-pos-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: restaurant_pos
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: pos_user
+      MYSQL_PASSWORD: pos_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - pos-network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: restaurant-pos-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: pos_user
+      DB_PASSWORD: pos_password
+      DB_NAME: restaurant_pos
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      FRONTEND_URL: http://localhost:3000
+    depends_on:
+      - mysql
+    networks:
+      - pos-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: restaurant-pos-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      VITE_API_URL: http://localhost:3001/api
+    depends_on:
+      - backend
+    networks:
+      - pos-network
+
+volumes:
+  mysql_data:
+
+networks:
+  pos-network:
+    driver: bridge
